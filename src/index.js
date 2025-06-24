@@ -16,6 +16,7 @@ const app = express();
 
 // 中间件设置
 app.use(cors());
+app.use(authenticateToken);
 app.use(helmet());
 app.use(logger.expressMiddleware); // 使用 winston 日志中间件
 app.use(express.json());
