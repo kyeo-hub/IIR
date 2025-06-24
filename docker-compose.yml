@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: pir-api
-    container_name: pir-api
+    image: iir-api
+    container_name: iir-api
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -27,8 +25,8 @@ services:
     env_file:
       - .env
     networks:
-      - pir-network
+      - iir-network
 
 networks:
-  pir-network:
+  iir-network:
     driver: bridge

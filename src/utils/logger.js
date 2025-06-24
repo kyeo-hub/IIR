@@ -29,7 +29,7 @@ const consoleFormat = winston.format.combine(
 const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: logFormat,
-  defaultMeta: { service: 'pir-api' },
+  defaultMeta: { service: 'iir-api' },
   transports: [
     // 写入所有日志到 combined.log
     new winston.transports.File({ 
