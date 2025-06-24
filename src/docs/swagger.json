@@ -1,0 +1,396 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "图片和图标API",
+    "description": "提供图片和图标管理功能的API服务",
+    "version": "1.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Media Items",
+      "description": "管理图片和图标资源"
+    }
+  ],
+  "security": [{
+    "bearerAuth": []
+  }],
+
+  "paths": {
+    "/media": {
+      "get": {
+        "tags": ["Media Items"],
+        "summary": "获取图片和图标信息",
+        "description": "支持多条件查询、排序、分页和搜索功能",
+        "operationId": "getMediaItems",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "媒体类型，可以是单个值或数组",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["image", "icon"]
+              }
+            },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "媒体分类，可以是单个值或数组",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码，默认为1",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "每页条数，默认为10，最大为100",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "排序字段，默认为createdAt",
+            "schema": {
+              "type": "string",
+              "default": "createdAt",
+              "enum": ["name", "type", "category", "createdAt"]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "排序方向，默认为desc",
+            "schema": {
+              "type": "string",
+              "default": "desc",
+              "enum": ["asc", "desc"]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "搜索关键词，将在name和category字段中进行模糊匹配",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取媒体项列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MediaItem"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "description": "总记录数"
+                        },
+                        "page": {
+                          "type": "integer",
+                          "description": "当前页码"
+                        },
+                        "limit": {
+                          "type": "integer",
+                          "description": "每页条数"
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "description": "总页数"
+                        }
+                      }
+                    },
+                    "stats": {
+                      "type": "object",
+                      "properties": {
+                        "categories": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "_id": {
+                                "type": "string",
+                                "description": "分类名称"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "description": "该分类下的媒体项数量"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Media Items"],
+        "summary": "上传新的图片或图标",
+        "operationId": "uploadMediaItem",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "媒体文件名称"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "媒体分类"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["image", "icon"],
+                    "description": "媒体类型"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "媒体文件"
+                  }
+                },
+                "required": ["name", "category", "type", "file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "媒体项创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MediaItem"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/media/{id}": {
+      "delete": {
+        "tags": ["Media Items"],
+        "summary": "删除指定ID的媒体文件",
+        "operationId": "deleteMediaItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "要删除的媒体项的ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "媒体项删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "媒体项不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "MediaItem": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "媒体项ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "媒体文件名称"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["image", "icon"],
+            "description": "媒体类型"
+          },
+          "category": {
+            "type": "string",
+            "description": "媒体分类"
+          },
+          "url": {
+            "type": "string",
+            "description": "媒体文件URL"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          }
+        }
+      }
+    }
+  }
+}
