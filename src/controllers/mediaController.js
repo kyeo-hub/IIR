@@ -121,33 +121,36 @@ exports.getMediaList = async (req, res) => {
       .skip(skip)
       .limit(limitNum);
 
-    // 获取总数
-    const total = await MediaItem.countDocuments(query);
+    // 获取总数（用于分页计算）
+    const fullTotal = await MediaItem.countDocuments(query);
 
     // 如果请求的页码超出范围，返回错误
-    const totalPages = Math.ceil(total / limitNum);
-    if (pageNum > totalPages && total > 0) {
+    const totalPages = Math.ceil(fullTotal / limitNum);
+    if (pageNum > totalPages && fullTotal > 0) {
       return res.status(400).json({
         error: `请求的页码 ${pageNum} 超出范围，最大页码为 ${totalPages}`
       });
     }
 
-    // 获取分类统计
+    // 获取所有分类的统计信息（不受查询条件限制）
     const categoryStats = await MediaItem.aggregate([
-      { $match: query },
-      { $group: { _id: '$category', count: { $sum: 1 } } }
+      // 如果有type条件，保留type过滤
+      ...(query.type ? [{ $match: { type: query.type } }] : []),
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }  // 按分类名称排序
     ]);
 
     res.json({
       data: mediaItems,
       pagination: {
-        total,
+        total: fullTotal,  // 使用完整总数
         page: pageNum,
         limit: limitNum,
-        totalPages
+        totalPages  // 已经在前面计算过了
       },
       stats: {
-        categories: categoryStats
+        categories: categoryStats,
+        total: fullTotal  // 添加总数到统计信息中
       }
     });
 
